@@ -12,6 +12,7 @@ const ANSI_GREY = "\033[90m";
 const ANSI_ERASE_LINE = "\033[2K";
 
 $total = 0;
+$total_time = 0;
 $cf_hit = 0;
 $bc_hit = 0;
 $uncached = 0;
@@ -35,7 +36,7 @@ do {
 			'client_config' => [
 				'decode_content' => false,
 				'on_stats' => function ( TransferStats $stats ) {
-					global $total, $cf_hit, $bc_hit, $uncached;
+					global $total, $total_time, $cf_hit, $bc_hit, $uncached;
 					// Reset status bar.
 					echo "\r" . ANSI_ERASE_LINE . "\r";
 
@@ -57,13 +58,15 @@ do {
 							$uncached++;
 						}
 					}
+					$resp_time = $stats->getTransferTime();
+					$total_time += $resp_time;
 					$success = $code < 400;
 					printf(
 						'%s[%s]%s [%.3fs]%s %-150s [CF %s] [BC %s] (%.1fMB)' . PHP_EOL,
 						$success ? ANSI_GREEN : ANSI_RED,
 						$code ?? '???',
 						ANSI_GREY,
-						$stats->getTransferTime(),
+						$resp_time,
 						ANSI_RESET,
 						$stats->getEffectiveUri(),
 						$cache,
@@ -92,11 +95,11 @@ do {
 	echo PHP_EOL;
 
 	printf(
-		"Completed %d URLs in %.3fs (%.1f/sec, avg %.3f). %d CF hits, %d BC hits, %d uncached." . PHP_EOL,
+		"Completed %d URLs in %.3fs (%.1f req/s, %.3f s/req). %d CF hits, %d BC hits, %d uncached." . PHP_EOL,
 		$total,
 		$end - $start,
-		$total / ( $end - $start ),
-		( $end - $start ) / $total,
+		$total / $total_time,
+		$total_time / $total,
 		$cf_hit,
 		$bc_hit,
 		$uncached
@@ -104,6 +107,7 @@ do {
 
 	// Reset.
 	$total = 0;
+	$total_time = 0;
 	$cf_hit = 0;
 	$bc_hit = 0;
 	$uncached = 0;
