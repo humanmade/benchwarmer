@@ -1,0 +1,6 @@
+{
+    "require": {
+        "eliashaeussler/cache-warmup": "^3.0",
+        "symfony/console": "^6.4"
+    }
+}
